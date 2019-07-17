@@ -11,7 +11,7 @@ class Ship:
         self.screen_rect = ai_game.screen.get_rect()
         
         #load the ship image and get its rect
-        self.image = pygame.image.load('ship.bmp')
+        self.image = pygame.image.load('ship3.bmp')
         self.rect = self.image.get_rect()
         
         #start ship at bottom center
@@ -37,3 +37,7 @@ class Ship:
     def blitme(self):
         #draw ship at current location
         self.screen.blit(self.image, self.rect)
+        
+    def center_ship(self):
+        self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)
