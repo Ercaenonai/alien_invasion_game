@@ -6,9 +6,11 @@ import pygame.mixer
 from pygame.mixer import Sound
 from settings import Settings
 from game_stats import GameStats
+from button import Button
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+
 
 class AlienInvasion:
     #Class to manage game assets and behaviors
@@ -38,6 +40,8 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
         
         self._create_fleet()
+        
+        self.play_button = Button(self, "Play")
             
     def run_game(self):
         #start the main loop for the game
@@ -47,7 +51,7 @@ class AlienInvasion:
                 self.ship.update()
                 self._update_bullets() 
                 self._update_aliens()
-                self._update_screen()
+            self._update_screen()
             
     def _check_events(self):
             #watch for keyboard and mouse input
@@ -145,6 +149,7 @@ class AlienInvasion:
             alien.x = alien_width +2 * alien_width * alien_number
             alien.rect.x = alien.x
             alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+            
             self.aliens.add(alien)
     
     #responds to alien hitting an edge
@@ -194,6 +199,10 @@ class AlienInvasion:
             bullet.draw_bullet()
             
         self.aliens.draw(self.screen)
+        
+        #draw play button if game inactive
+        if not self.stats.game_active:
+            self.play_button.draw_button()
             
             #make recent display visable
         pygame.display.flip()
