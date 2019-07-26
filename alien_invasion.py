@@ -6,6 +6,7 @@ import pygame.mixer
 from pygame.mixer import Sound
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
 from bullet import Bullet
@@ -35,6 +36,8 @@ class AlienInvasion:
         
         self.stats = GameStats(self)
         
+        self.sb = Scoreboard(self)
+        
         self.bullets = pygame.sprite.Group()
         
         self.aliens = pygame.sprite.Group()
@@ -63,6 +66,28 @@ class AlienInvasion:
                     self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                     self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
+                
+    def _check_play_button(self, mouse_pos):
+        #start game when play button clicked
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.stats.game_active:
+            self.settings.initialize_dynamic_settings()
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            self.sb.prep_score()
+            self.sb.prep_level()
+            self.sb.prep_ships()
+            #remove remaining aliens and bullets
+            self.aliens.empty()
+            self.bullets.empty()
+            #create new fleet and recenter ship
+            self._create_fleet()
+            self.ship.center_ship()
+            #hide cursor while game is active
+            pygame.mouse.set_visible(False)
                     
     def _check_keydown_events(self, event):            
                 if event.key == pygame.K_RIGHT:
@@ -102,6 +127,11 @@ class AlienInvasion:
         #check for bullet hit, remove bullet and alien
         collisions = pygame.sprite.groupcollide(
                 self.bullets, self.aliens, True, True)
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points *len(aliens)
+            self.sb.prep_score()
+            self.sb.check_high_score()
         for collision in collisions:
             hit = pygame.mixer.Sound('hit.wav')
             pygame.mixer.Sound.play(hit)
@@ -112,6 +142,9 @@ class AlienInvasion:
             self._create_fleet()
             level_up = pygame.mixer.Sound('level-up.wav')
             pygame.mixer.Sound.play(level_up)
+            self.settings.increase_speed()
+            self.stats.level += 1
+            self.sb.prep_level()
     
     #update all aliens position in fleet
     def _update_aliens(self):
@@ -167,8 +200,9 @@ class AlienInvasion:
     
     #respond to ship hit
     def _ship_hit(self):
-        if self.stats.ships_left >0:
+        if self.stats.ships_left > 0:
             self.stats.ships_left -= 1
+            self.sb.prep_ships()
             #remove remaining aliens and bullets
             self.aliens.empty()
             self.bullets.empty()
@@ -181,6 +215,7 @@ class AlienInvasion:
             sleep(1.5)
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)
         
     def _check_aliens_bottom(self):
         #check for aliens reaching bottom of acreen
@@ -200,6 +235,9 @@ class AlienInvasion:
             
         self.aliens.draw(self.screen)
         
+        #draw scoreboard
+        self.sb.show_score()
+        
         #draw play button if game inactive
         if not self.stats.game_active:
             self.play_button.draw_button()
@@ -209,5 +247,6 @@ class AlienInvasion:
 
 if __name__ == '__main__':
     #make game instance and run
-    ai= AlienInvasion()
+    ai = AlienInvasion()
     ai.run_game()
+
